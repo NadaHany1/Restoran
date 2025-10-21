@@ -4,9 +4,7 @@
 // define the function documentation params
 // define functions (await functions with promise and static functions)
 
-import axios from "axios";
-type AxiosError = import("axios").AxiosError; 
-import { getToken } from "./auth";
+import axios, { AxiosError } from 'axios';import { getToken } from "./auth";
 import { Order } from "./orders";
 
 const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
