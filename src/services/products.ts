@@ -43,8 +43,9 @@ export async function fetchProducts(category?:string): Promise<Product[]> {
 
         const response = await axios.get<Product[]>(url)
         return response.data;
-    }catch(error: any){
-        console.error("error fetching products:", error.message || error);
+    }catch(error: unknown){
+        const err = error as AxiosError;
+        console.error("error fetching products:", err.message || error);
         return [];
     }
 }

@@ -62,8 +62,12 @@ const LoginPage = () => {
       const authData = await login(username, password);
       saveAuth(authData); // Save token + user in localStorage
       router.push('/'); // redirect to dashboard or home page
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unknown error occurred');
+      }
     } finally {
       setLoading(false);
     }
