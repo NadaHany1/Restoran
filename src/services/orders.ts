@@ -1,43 +1,34 @@
-import axios from "axios"
-import { CartProduct } from "./cart";
-import { getToken } from "./auth";
-import { AxiosError } from "axios";
+import { supabase } from "@/lib/supabase/client";
 
-const API_URL = process.env.NEXT_PUBLIC_BASE_URL;
+type OrderStatus = "pending" | "preparing" | "delivered";
 
-export interface Order{
-    id:string,
-    userId:string,
-    items:CartProduct[],
-    orderTotal:number,
-    status:string,
-    date:string
+export async function getOrdersWithItems(userId: string) {
+  const { data, error } = await supabase
+    .from("orders")
+    .select(
+      `
+            *,
+            order_item (*)
+        `,
+    )
+    .eq("user_id", userId)
+    .order("order_date", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    return null;
+  }
+
+  console.log("orders data : ", data);
+  return data;
 }
 
-/**
- * get the registered user's orders
- * 
- * @returns Promise<Order[]>
- */
+export function getOrderStatus(createdAt: string): OrderStatus{
+  const now = new Date();
+  const created = new Date(createdAt);
+  const diff = (now.getTime() - created.getTime()) / (1000 * 60);
 
-export async function getOrders():Promise<Order[] | null> {
-    try{
-        const url = `${API_URL}/orders`
-        const token = getToken()
-        if (!token) { throw new Error("cann't find user token from orders")}
-        const response = axios.get<Order[]>(
-            url,
-            {
-                headers:{
-                    Authorization:`Bearer ${token}`
-                }
-            }
-        )
-        return (await response).data;
-    }catch(error:unknown){
-        const err = error as AxiosError
-        console.error("cann't fetch orders : ", err.message)
-        return null
-    }
-
+  if (diff < 0.5) return "pending";
+  if (diff < 10) return "preparing";
+  return "delivered";
 }

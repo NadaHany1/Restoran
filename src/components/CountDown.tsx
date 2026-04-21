@@ -16,7 +16,7 @@ const CountDown = () => {
     setEndingDate(date)
   }, [])
 
-  if (!endingDate) return null // render nothing until mounted
+  if (!endingDate) return null
 
   return <Countdown date={endingDate} className='text-5xl text-orange-200 font-bold'/>
 }

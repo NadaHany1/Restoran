@@ -27,7 +27,6 @@ const Slider = () => {
 
   const handleButton = () => {
     setFlag(prev => {
-      console.log("New flag:", !prev);
       return !prev;
     });
   };
@@ -46,7 +45,6 @@ const Slider = () => {
       {/* TEXT COTAINER */}
       <div className=' text-container flex flex-col h-1/2 px-8 items-center justify-center bg-orange-100 min-h-min md:h-full md:w-1/2'>
         <p className='text-5xl font-extrabold text-orange-500 text-center md:text-6xl xl:text-7xl uppercase'>
-          {/* ALWAYS FRESH & ALWAYS TASTY & ALWAYS HOT */}
           {data[currentSlide].title}
         </p>
         <button onClick={handleButton} className='bg-orange-500 text-white cursor-pointer p-4 m-8 w-auto text-lg hover:bg-orange-700 transition duration-300 ease-in-out'>Order Now</button>

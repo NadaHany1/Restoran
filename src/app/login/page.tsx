@@ -1,48 +1,62 @@
-'use client';
+"use client"
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { LoginAction } from "@/actions/auth";
-
-interface LoginErrors {
-  email?: string[];
-  password?: string[];
-}
+import React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { LoginSchema, LoginInput } from "@/schemas/auth";
+import { useAuth } from "@/context/AuthContext";
 
 const LoginPage = () => {
   const router = useRouter();
+  const { login } = useAuth();
 
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<LoginErrors>({});
-  const [serverError, setServerError] = useState("");
-  const [success, setSuccess] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isSubmitSuccessful },
+    setError,
+    reset,
+  } = useForm<LoginInput>({
+    resolver: zodResolver(LoginSchema),
+  });
 
-  async function handleSubmit(formData: FormData) {
-    setErrors({});
-    setServerError("");
+  const onSubmit: SubmitHandler<LoginInput> = async (data) => {
+    try {
+      const result = await login(data.email, data.password);
 
-    const result = await LoginAction(formData);
-
-    if (!result.success) {
-      if (result.errors) {
-        setErrors(result.errors);
+      if (!result.success) {
+        setError("root", {
+          type: "server",
+          message: result.message ?? "Invalid credentials",
+        });
+        return;
       }
-      if (result.message) {
-        setServerError(result.message);
-      }
-      return;
+
+      reset();
+      router.push("/");
+    } catch {
+      setError("root", {
+        type: "server",
+        message: "Something went wrong. Please try again.",
+      });
     }
-
-    setSuccess(true);
-  }
+  };
 
   return (
-    <div className="flex w-4/5 h-[60vh] my-[10vh] m-auto shadow-2xl rounded-xl overflow-hidden">
+    <div className="flex w-4/5 h-[60vh] min-h-fit my-[10vh] m-auto shadow-2xl rounded-xl overflow-hidden">
       {/* IMAGE CONTAINER */}
       <div className="hidden md:block relative flex-1 h-full">
-        <Image src="/login.webp" alt="pizza" fill className="object-cover" />
+        <Image
+          src="/login.webp"
+          alt="pizza"
+          fill
+          sizes="100"
+          priority
+          className="object-cover"
+        />
         <div className="absolute inset-0 bg-black/20 backdrop-blur-xs flex justify-center items-center">
           <p className="text-white text-6xl text-center font-['BBH_Bartle', cursive]">
             Welcome <br /> Back
@@ -56,44 +70,66 @@ const LoginPage = () => {
           Login
         </h1>
 
-        <form action={handleSubmit} className="flex flex-col w-[80%] gap-4">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col w-[80%] gap-4"
+        >
           {/* Email */}
           <label className="relative">
             <input
               type="email"
-              name="email"
+              placeholder=""
+              autoComplete="username"
               className="peer w-full rounded-xl border border-gray-400 px-3 pt-4 pb-1 outline-none focus:border-orange-500"
+              {...register("email")}
             />
-            <span className="absolute left-3 top-3 text-sm text-gray-500 transition-all peer-focus:top-0 peer-focus:text-xs peer-focus:font-semibold peer-valid:top-0 peer-valid:text-xs peer-valid:font-semibold peer-valid:text-green-600">
+            <span className="absolute top-0 left-3 text-xs font-semibold text-gray-500 transition-all peer-focus:top-0 peer-focus:text-xs peer-focus:font-semibold peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm">
               Email
             </span>
-            {errors.email && <p className="text-red-500">{errors.email[0]}</p>}
+            {errors.email && (
+              <p className="text-red-500">{errors.email.message}</p>
+            )}
           </label>
 
           {/* Password */}
           <label className="relative">
             <input
               type="password"
-              name="password"
+              placeholder=""
+              autoComplete="current-password"
               className="peer w-full rounded-xl border border-gray-400 px-3 pt-4 pb-1 outline-none focus:border-orange-500"
+              {...register("password")}
             />
-            <span className="absolute left-3 top-3 text-sm text-gray-500 transition-all peer-focus:top-0 peer-focus:text-xs peer-focus:font-semibold peer-valid:top-0 peer-valid:text-xs peer-valid:font-semibold peer-valid:text-green-600">
+            <span className="absolute top-0 left-3 text-xs font-semibold text-gray-500 transition-all peer-focus:top-0 peer-focus:text-xs peer-focus:font-semibold peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm">
               Password
             </span>
-            {errors.password && <p className="text-red-500">{errors.password[0]}</p>}
+            {errors.password && (
+              <p className="text-red-500">{errors.password.message}</p>
+            )}
           </label>
-          {serverError && <p className="text-red-500 text-sm">{serverError}</p>}
-          {success && <p className="text-green-500 text-sm">{"successful login"}</p>}
+
+          {errors.root?.message && (
+            <p className="text-red-500 text-sm">{errors.root.message}</p>
+          )}
+          {isSubmitSuccessful && (
+            <p className="text-green-500 text-sm">{"Successful login!"}</p>
+          )}
+
           <button
             type="submit"
-            disabled={loading}
-            className="p-2 w-[50%] bg-orange-500 text-white text-md rounded-xl m-auto hover:bg-orange-600 transition duration-300"
+            disabled={isSubmitting}
+            className="disabled:opacity-50 p-2 w-[50%] bg-orange-500 text-white text-md rounded-xl m-auto hover:bg-orange-600 transition duration-300"
           >
-            {loading ? "Logging in..." : "Login"}
+            {isSubmitting ? "Logging in..." : "Login"}
           </button>
-          <Link href="/signup" className="text-orange-500">
-            Forgot password?
-          </Link>
+
+          <p className="text-gray-500 text-center">
+            Don&apos;t have an account ?
+            <br />
+            <Link href="/signup" className="text-orange-500 ml-3">
+              Sign up
+            </Link>
+          </p>
         </form>
       </div>
     </div>

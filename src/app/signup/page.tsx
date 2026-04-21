@@ -1,50 +1,214 @@
-import Image from 'next/image'
-import React from 'react'
+'use client'
+
+import React from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+import { SignupSchema, SignupInput } from "@/schemas/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+
 
 const Signup = () => {
-  return (
-    <section className="bg-gray-50 dark:bg-gray-900">
-  <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
-      {/* <a href="#" className="flex items-center mb-6 text-2xl font-semibold text-gray-900 dark:text-white">
-          <Image className="w-8 h-8 mr-2" src="https://flowbite.s3.amazonaws.com/blocks/marketing-ui/logo.svg" alt="logo" />
-          Flowbite    
-      </a> */}
-      <div className="w-full bg-white rounded-lg shadow dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
-          <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
-              <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
-                  Create an account
-              </h1>
-              <form className="space-y-4 md:space-y-6" action="#">
-                  <div>
-                      <label htmlFor='email' className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Your email</label>
-                      <input type="email" name="email" id="email" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:border-2 focus:border-orange-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:border-orange-400" placeholder="name@company.com" required />
-                  </div>
-                  <div>
-                      <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
-                      <input type="password" name="password" id="password" placeholder="••••••••" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:border-2 focus:border-orange-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:border-orange-400" required />
-                  </div>
-                  <div>
-                      <label htmlFor="confirm-password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Confirm password</label>
-                      <input type="confirm-password" name="confirm-password" id="confirm-password" placeholder="••••••••" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:border-2 focus:border-orange-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:border-orange-400" required />
-                  </div>
-                  <div className="flex items-start">
-                      <div className="flex items-center h-5">
-                        <input id="terms" aria-describedby="terms" type="checkbox" className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-orange-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-orange-600 dark:ring-offset-gray-800" required />
-                      </div>
-                      <div className="ml-3 text-sm">
-                        <label htmlFor="terms" className="font-light text-gray-500 dark:text-gray-300">I accept the <a className="font-medium text-orange-500 hover:underline dark:text-orange-400" href="#">Terms and Conditions</a></label>
-                      </div>
-                  </div>
-                  <button type="submit" className="w-full text-white bg-orange-500 hover:bg-orange-600 focus:ring-4 focus:outline-none font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-orange-400 dark:hover:bg-orange-500 cursor-pointer">Create an account</button>
-                  <p className="text-sm font-light text-gray-500 dark:text-gray-400">
-                      Already have an account? <a href="#" className="font-medium text-orange-600 hover:underline dark:text-orange-400">Login here</a>
-                  </p>
-              </form>
-          </div>
-      </div>
-  </div>
-</section>
-  )
-}
+  const router = useRouter();
+  const { signup } = useAuth();
+  
 
-export default Signup
+  const { register, handleSubmit, setError, reset, formState:{errors, isSubmitting, isSubmitSuccessful} } = useForm({
+    resolver: zodResolver(SignupSchema),
+  });
+
+  const onSubmit: SubmitHandler<SignupInput> = async (data) =>{
+    try{
+      const result = await signup(data);
+      if (!result.success) {
+        if (result.errors) {
+          Object.entries(result.errors).forEach(([field, messages]) => {
+            if (field === "root") {
+              setError("root", {
+                type: "server",
+                message: messages?.[0],
+              });
+            } else {
+              setError(field as keyof SignupInput, {
+                type: "server",
+                message: messages?.[0],
+              });
+            }
+          });
+        }
+        return;
+        
+      }
+
+      reset();
+      router.push("/");
+    }catch{
+      setError(
+        "root",{
+          type: "server",
+          message: "something went wrong from client catch"
+        }
+      )
+    }
+  }
+
+  return (
+    <div className="relative flex justify-center items-center py-[10vh] bg-white">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col gap-3 w-4/5 md:w-1/2 p-5 rounded-2xl relative shadow-2xl  "
+      >
+        {/* Title */}
+        <p className="relative flex items-center pl-8 text-[28px] font-semibold tracking-tight text-orange-500">
+          <span className="absolute left-0 w-[18px] h-[18px] bg-orange-500 rounded-full"></span>
+          <span className="absolute left-0 w-[18px] h-[18px] bg-orange-500 rounded-full animate-ping"></span>
+          Register
+        </p>
+
+        <p className="text-sm text-gray-500">
+          Signup now and get full access to our site.
+        </p>
+
+        {/* Name Fields */}
+        <div className="flex gap-2">
+          <label className="relative w-full">
+            <input
+              type="text"
+              placeholder=""
+              autoComplete="given-name"
+              className="peer w-full rounded-xl border border-gray-400 px-3 pt-4 pb-1 outline-none focus:border-orange-500"
+              {...register("firstName")}
+            />
+            <span className="absolute top-0 left-3 text-xs font-semibold text-gray-500 transition-all peer-focus:top-0 peer-focus:text-xs peer-focus:font-semibold peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm">
+              Firstname
+            </span>
+            {errors.firstName && (
+              <p className="text-red-500">{errors.firstName.message}</p>
+            )}
+          </label>
+
+          <label className="relative w-full">
+            <input
+              type="text"
+              placeholder=""
+              autoComplete="family-name"
+              className="peer w-full rounded-xl border border-gray-400 px-3 pt-4 pb-1 outline-none focus:border-orange-500"
+              {...register("lastName")}
+            />
+            <span className="absolute top-0 left-3 text-xs font-semibold text-gray-500 transition-all peer-focus:top-0 peer-focus:text-xs peer-focus:font-semibold peer-placeholder-shown:left-3 peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm">
+              Lastname
+            </span>
+            {errors.lastName && (
+              <p className="text-red-500">{errors.lastName.message}</p>
+            )}
+          </label>
+        </div>
+
+        {/* Email */}
+        <label className="relative">
+          <input
+            type="email"
+            placeholder=""
+            autoComplete="email"
+            className="peer w-full rounded-xl border border-gray-400 px-3 pt-4 pb-1 outline-none focus:border-orange-500"
+            {...register("email")}
+          />
+          <span className="absolute top-0 left-3 text-xs font-semibold text-gray-500 transition-all peer-focus:top-0 peer-focus:text-xs peer-focus:font-semibold peer-placeholder-shown:left-3 peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm">
+            Email
+          </span>
+          {errors.email && (
+            <p className="text-red-500">{errors.email.message}</p>
+          )}
+        </label>
+
+        {/* Password */}
+        <label className="relative">
+          <input
+            type="password"
+            placeholder=""
+            autoComplete="new-password"
+            className="peer w-full rounded-xl border border-gray-400 px-3 pt-4 pb-1 outline-none focus:border-orange-500"
+            {...register("password")}
+          />
+          <span className="absolute top-0 left-3 text-xs font-semibold text-gray-500 transition-all peer-focus:top-0 peer-focus:text-xs peer-focus:font-semibold peer-placeholder-shown:left-3 peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm">
+            Password
+          </span>
+          {errors.password && (
+            <p className="text-red-500">{errors.password.message}</p>
+          )}
+        </label>
+
+        {/* Confirm Password */}
+        <label className="relative">
+          <input
+            type="password"
+            placeholder=""
+            autoComplete="new-password"
+            className="peer w-full rounded-xl border border-gray-400 px-3 pt-4 pb-1 outline-none focus:border-orange-500"
+            {...register("confirmPassword")}
+          />
+          <span className="absolute top-0 left-3 text-xs font-semibold text-gray-500 transition-all peer-focus:top-0 peer-focus:text-xs peer-focus:font-semibold peer-placeholder-shown:left-3 peer-placeholder-shown:top-3 peer-placeholder-shown:text-sm">
+            Confirm password
+          </span>
+          {errors.confirmPassword && (
+            <p className="text-red-500">{errors.confirmPassword.message}</p>
+          )}
+        </label>
+
+        <div className="flex items-start">
+          <div className="flex items-center h-5">
+            <input
+              id="terms"
+              aria-describedby="terms"
+              type="checkbox"
+              {...register("terms")}
+              className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-orange-300"
+            />
+          </div>
+
+          <div className="ml-3 text-sm">
+            <label htmlFor="terms" className="text-gray-500">
+              I accept the{" "}
+              <a
+                className="font-medium text-orange-500 hover:underline"
+                href="#"
+              >
+                Terms and Conditions
+              </a>
+              {errors.terms && (
+                <p className="text-red-500">{errors.terms.message}</p>
+              )}
+            </label>
+          </div>
+        </div>
+        {errors.root?.message && (
+          <p className="text-red-500 text-sm">{errors.root.message}</p>
+        )}
+        {isSubmitSuccessful && (
+          <p className="text-green-500 text-sm">
+            {"You are registered successfuly!"}
+          </p>
+        )}
+
+        {/* Submit */}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="disabled:opacity-50 mt-2 rounded-xl bg-orange-500 py-2 text-white text-base transition duration-300 hover:bg-orange-600"
+        >
+          {isSubmitting ? "Submitting ..." : "submit"}
+        </button>
+
+        {/* Sign In */}
+        <p className="text-center text-sm text-gray-500">
+          Already have an account?{" "}
+          <a href="login" className="text-orange-500 hover:underline">
+            Signin
+          </a>
+        </p>
+      </form>
+    </div>
+  );
+};
+
+export default Signup;

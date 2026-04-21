@@ -1,34 +1,60 @@
-"use server"
-
-import { LoginSchema } from "@/schemas/auth";
-import { redirect } from "next/navigation";
-import data from '@/db.json'
+"use server";
+import { supabase } from "@/lib/supabase/client";
 
 export async function LoginAction(formData: FormData) {
-  const rowData = {
-    email: formData.get("email"),
-    password: formData.get("password"),
-  };
+  try {
+    const email = (formData.get("email") || "").toString();
+    const password = (formData.get("password") || "").toString();
 
-  const result = LoginSchema.safeParse(rowData);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (!result.success) {
+    if (error) {
+      return { success: false, message: error.message };
+    }
+
+    return { success: true, user: data.user };
+  } catch (err) {
+    console.error("LoginAction error:", err);
+    return { success: false, message: "Something went wrong" };
+  }
+}
+
+
+
+
+export async function SignupAction(formData: FormData) {
+  try {
+    const email = (formData.get("email") || "").toString();
+    const password = (formData.get("password") || "").toString();
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      if (error.message.toLowerCase().includes("email")) {
+        return {
+          success: false,
+          errors: { email: [error.message] },
+        };
+      }
+
+      return {
+        success: false,
+        errors: { root: [error.message] },
+      };
+    }
+
+    return { success: true, user: data.user };
+  } catch (err) {
+    console.error("SignupAction error:", err);
     return {
       success: false,
-      errors: result.error.flatten().fieldErrors,
+      errors: { root: ["Something went wrong"] },
     };
   }
-
-  const { email, password } = result.data;
-
-  const user = data.users.find(
-    (u) => u.email === email && u.password === password
-  );
-
-  if (!user) {
-    return { success: false, message: "Invalid credentials" };
-  }
-
-  redirect("/");
-  return { success: true };
 }

@@ -1,6 +1,7 @@
 import React from 'react'
 import { menu } from '@/data'
 import Link from 'next/link'
+import Footer from '@/components/Footer'
 
 const MenuPage = () => {
   return (
@@ -21,7 +22,6 @@ const MenuPage = () => {
 
         </Link>
       ))}
-      
     </div>
   )
 }
