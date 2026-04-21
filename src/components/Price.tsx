@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { TCartItemInsert, CartItem, Product, User } from "@/types/Types";
+import { TCartItemInsert, Product, User } from "@/types/Types";
 import {useCartStore} from "@/context/cartContextZustand"
 import { useAuth } from "@/context/AuthContext";
 import Toast from "./Toast";
