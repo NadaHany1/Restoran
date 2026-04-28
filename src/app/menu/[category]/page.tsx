@@ -15,8 +15,6 @@ const CategoryPage = async ({
     .select("*")
     .eq("category", category);
 
-  console.log(data);
-
   return (
     <div className="flex flex-row flex-wrap text-orange-500">
       {data?.map((item) => (
