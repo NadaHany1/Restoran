@@ -1,16 +1,21 @@
-import { pizzas } from '@/data'
-import { Product } from '@/types/Types';
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 import { supabase } from '@/lib/supabase/client';
 
-const CategoryPage = async ({ params }: { params: { category: string } }) => {
+const CategoryPage = async ({
+  params,
+}: {
+  params: Promise<{ category: string }>;
+}) => {
+  const { category } = await params;
 
-   const { data, error } = await supabase
-     .from("products")
-     .select("*")
-     .eq("category", params.category);
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("category", category);
+
+  console.log(data);
 
   return (
     <div className="flex flex-row flex-wrap text-orange-500">
